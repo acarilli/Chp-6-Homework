@@ -1,0 +1,64 @@
+---
+title: "Exercise 5"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+```
+
+```{r data}
+knowledge <- read_csv("FiscalPolicy.csv") %>% 
+  janitor::clean_names()
+```
+
+### (a)
+
+```{r part_a}
+knowledge %$% 
+  lm(spend_unemp ~ knowledge_index2) %>% 
+  tidy()
+
+knowledge %$% 
+  lm(tax_unemp_correct ~ knowledge_index2) %>% 
+  tidy()
+```
+
+### (b)
+
+```{r part_b}
+knowledge %$% 
+  lm(spend_unemp ~ knowledge_index2 + gop) %>% 
+  tidy()
+
+knowledge %$% 
+  lm(tax_unemp_correct ~ knowledge_index2 + gop) %>% 
+  tidy()
+```
+
+
+### (c)
+
+```{r part_c}
+knowledge %$% 
+  lm(spend_unemp ~ knowledge_index2*gop) %>% 
+  tidy()
+
+knowledge %$% 
+  lm(tax_unemp_correct ~ knowledge_index2*gop) %>% 
+  tidy()
+```
+

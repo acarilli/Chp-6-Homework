@@ -1,0 +1,128 @@
+---
+title: "Exercise 2"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+```
+
+```{r data}
+fed <- read_csv("fed_2012_kkedits.csv") %>% 
+  janitor::clean_names() %>% 
+  rename(quarters = election)
+```
+
+### (a)
+
+```{r part_a}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %>% 
+  ggplot(aes(x = quarters, y = fedfunds)) + 
+  geom_point() + 
+  geom_smooth(method =lm, se = FALSE) +
+  facet_wrap(~ party) 
+```
+
+### (b)
+
+```{r part_b}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party) %>% 
+  tidy()
+```
+
+#### (i)
+
+```{r part_b_i}
+rep_marginal <- 
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party) %>% 
+  tidy() %>% 
+  pull(estimate)
+rep_marginal[2]
+```
+
+#### (ii)
+
+```{r part_b_ii}
+rep_democrat <- 
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party) %>% 
+  tidy() %>% 
+  pull(estimate)
+rep_democrat[2] + rep_democrat[4]
+```
+
+
+### (c)
+
+```{r part_c}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party) %>% 
+  linearHypothesis("quarters + quarters:partyDemocrat = 0")
+```
+
+### (d)
+
+```{r part_d}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %>% 
+  ggplot(aes(x = quarters, y = fedfunds, color = party)) + 
+  geom_smooth(method =lm, se = FALSE) +
+  labs(x = "Quarters from last election", y = "Federal funds rate")
+```
+
+### (e)
+
+```{r part_e}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party + inflation + lag(fedfunds)) %>% 
+  tidy()
+```
+
+```{r part_e_i}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party + inflation + lag(fedfunds)) %>% 
+  linearHypothesis("quarters = 0")
+```
+
+```{r part_e_ii}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party + inflation + lag(fedfunds)) %>% 
+  linearHypothesis("quarters + quarters:partyDemocrat = 0")
+```
+
+```{r part_e_iii}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party + inflation + lag(fedfunds)) %>% 
+  linearHypothesis("lag(fedfunds) = 0")
+```
+
+```{r part_e_iv}
+fed %>% 
+  mutate(party = factor(democrat, labels = c("Republican", "Democrat"))) %$% 
+  lm(fedfunds ~ quarters*party + inflation + lag(fedfunds)) %>% 
+  linearHypothesis("inflation = 0")
+```

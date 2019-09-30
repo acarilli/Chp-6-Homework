@@ -1,0 +1,86 @@
+---
+title: "Exercise 3"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+```
+
+```{r data}
+cell <- read_csv("Cellphone_2012_homework.csv") %>% 
+  rename(number_of_deaths = numberofdeaths)
+```
+
+### (a)
+
+```{r part_a}
+cell %$% 
+  lm(number_of_deaths ~ cell_subscription + population + total_miles_driven + cell_ban + text_ban) %>% 
+  tidy()
+```
+
+### (b)
+
+### (c)
+
+```{r part_c}
+cell %$% 
+  lm(number_of_deaths ~ cell_subscription + population + cell_ban*total_miles_driven + text_ban*total_miles_driven) %>% 
+  tidy()
+
+betas <- 
+cell %$% 
+  lm(number_of_deaths ~ cell_subscription + population + cell_ban*total_miles_driven + text_ban*total_miles_driven) %>% 
+  tidy() %>% 
+  pull(estimate)
+
+# cell ban
+
+cell %>% 
+  filter(state %in% c("California", "Wyoming")) %>% 
+  select(state, total_miles_driven) %>% 
+  mutate("Number of lives" = betas[4] + total_miles_driven*betas[7]) %>% 
+  select(state, "Number of lives")
+
+# text ban
+
+cell %>% 
+  filter(state %in% c("California", "Wyoming")) %>% 
+  select(state, total_miles_driven) %>% 
+  mutate("Number of lives" = betas[6] + total_miles_driven*betas[8]) %>% 
+  select(state, "Number of lives", total_miles_driven)
+
+# effect of miles in state with neither ban
+
+betas[5]
+
+# effect in states with cell ban only
+
+betas[5] + betas[7]
+
+# effect in states with text ban only
+
+betas[5] + betas[8]
+
+# effect in states with both bans
+
+betas[5] + betas[7] + betas[8]
+```
+
+### (d)
+
+

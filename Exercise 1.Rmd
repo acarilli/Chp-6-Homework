@@ -1,0 +1,166 @@
+---
+title: "Exercise 1"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+require(tidyverse)
+require(readr)
+require(janitor)
+require(broom)
+require(magrittr)
+require(kableExtra)
+```
+
+```{r data}
+height_wage <- read_csv("HeightWage_MenWomenUS_HW.csv")
+```
+
+### (a)
+
+```{r part_a}
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
+  lm(wage96 ~ height85 + height81 + sex) %>% 
+  tidy()
+```
+
+### (b)
+
+```{r part_b}
+height_wage %>% 
+  mutate(female = 1 - male,
+         male = factor(male, labels = c("female", "male")),
+         female = factor(female, labels = c("female", "male"))) %$% 
+  lm(wage96 ~ height85 + height81 + male + female) %>% 
+  tidy()
+```
+
+### (c)
+
+```{r part_C}
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  filter(sex == "male") %$% 
+  lm(wage96 ~ height85 + height81) %>% 
+  tidy()
+
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  filter(sex == "female") %$% 
+  lm(wage96 ~ height85 + height81) %>% 
+  tidy()
+```
+
+### (d)
+
+```{r part_d}
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
+  lm(wage96 ~ height85 + height81 + sex * height81 + sex * height85 - sex)  %>% 
+  tidy()
+```
+
+### (e)
+
+```{r part_e}
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
+  lm(wage96 ~ height85 + height81 + sex * height81 + sex * height85)  %>% 
+  tidy()
+```
+
+### (f)
+
+```{r part_f}
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
+  lm(wage96 ~ height81 * sex + norest96 + norcen96 + south96) %>% 
+  tidy()
+
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
+  lm(wage96 ~ height81 * sex + norest96 + norcen96 + west96) %>% 
+  tidy()
+```
+
+
+#### Tidy Data Principles
+
+Columns are variables rows are observations.  We have race spread across three columns and region spread across 4 columns.  Tidy data suggests that both region and race be one variable (column) each and be factors not numerics.
+
+
+If the following returns false, there is an other category for race, if it returns true, black, white, hispanic exhaust the racial categories.
+
+```{r}
+height_wage %>% 
+  summarize(sum(black,white,hispanic)) == nrow(height_wage)
+```
+
+Let's combine black, white, hispanic into race.
+
+```{r}
+height_wage %>% 
+  mutate(white = ifelse(white == 1,  "white", ""),
+         black = ifelse(black == 1, "black", ""),
+         hispanic = ifelse(hispanic == 1, "hispanic", ""),
+         race = factor(str_c(white, black, hispanic))) %>% 
+  select(-black, -hispanic, -white)
+```
+
+We can do the same for region
+
+```{r}
+height_wage %>% 
+  mutate(norest96 = ifelse(norest96 == 1, "norest96", ""),
+         norcen96 = ifelse(norcen96 == 1, "norcen96", ""),
+         south96 = ifelse(south96 == 1, "south96", ""),
+         west96 = ifelse(west96 == 1, "west96", ""),
+         region = factor(str_c(norest96, norcen96, south96, west96))) %>% 
+  select(region, norest96, norcen96, south96, west96)
+```
+
+Finally, let's convert male into a factor sex.
+
+```{r}
+height_wage %>% 
+  mutate(sex = factor(male, labels = c("male", "female")))
+```
+
+Now we can combine these pipelines into one to create a tidy data frame.
+
+```{r}
+height_wage_tidy <- 
+height_wage %>% 
+  mutate(white = ifelse(white == 1,  "white", ""),
+         black = ifelse(black == 1, "black", ""),
+         hispanic = ifelse(hispanic == 1, "hispanic", ""),
+         race = factor(str_c(white, black, hispanic)),
+         norest96 = ifelse(norest96 == 1, "norest96", ""),
+         norcen96 = ifelse(norcen96 == 1, "norcen96", ""),
+         south96 = ifelse(south96 == 1, "south96", ""),
+         west96 = ifelse(west96 == 1, "west96", ""),
+         region = factor(str_c(norest96, norcen96, south96, west96)),
+         sex = factor(male, labels = c("male", "female"))) %>% 
+  select(-white, -black, -hispanic, -norest96, -norcen96, -south96, -west96, -male)
+```
+
+Part f with tidy data.
+
+```{r}
+height_wage_tidy %$% 
+  lm(wage96 ~ height81 * sex + region) %>% 
+  tidy()
+
+height_wage_tidy %$% 
+  lm(wage96 ~ height81 * sex + relevel(region, "west96")) %>% 
+  tidy()
+```
+

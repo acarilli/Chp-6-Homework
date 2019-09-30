@@ -1,0 +1,78 @@
+---
+title: "Exercise 4"
+author: "Carilli"
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
+                      options(digits = 3, scipen = 999))
+library(tidyverse)
+library(readr)
+library(janitor)
+library(broom)
+library(magrittr)
+library(kableExtra)
+library(car)
+```
+
+```{r data}
+speed <- read_csv("speeding_tickets_text.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(sex = factor(female, labels = c("female", "male"))) %>% 
+  rename(mph_over = mp_hover)
+```
+
+### (a)
+
+```{r part_a}
+speed %$% 
+  lm(amount ~ sex) %>% 
+  tidy()
+```
+
+### (b)
+
+```{r part_b}
+speed %$% 
+  lm(amount ~ sex + age + mph_over) %>% 
+  tidy()
+```
+
+
+### (c)
+
+```{r part_c}
+speed %$% 
+  lm(amount ~ sex + age + mph_over + black + hispanic) %>% 
+  tidy()
+```
+
+### (d)
+
+```{r part_d}
+speed %>% 
+  # drop_na() %>% 
+  summarize(sd_black = sd(black),
+            sd_hispanic = sd(hispanic),
+            sd_sex = sd(female))
+```
+
+### (e)
+
+```{r}
+speed %$% 
+  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic) %>% 
+  tidy()
+
+speed %$% 
+  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic) %>% 
+  linearHypothesis("mph_over:black - mph_over:hispanic - mph_over:sexmale = 0")
+  
+```
+
+
