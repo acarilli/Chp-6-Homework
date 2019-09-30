@@ -22,7 +22,8 @@ library(car)
 
 ```{r data}
 cell <- read_csv("Cellphone_2012_homework.csv") %>% 
-  rename(number_of_deaths = numberofdeaths)
+  rename(number_of_deaths = numberofdeaths) %>% 
+  mutate(population = population/1000000) 
 ```
 
 ### (a)
@@ -39,12 +40,16 @@ cell %$%
 
 ```{r part_c}
 cell %$% 
-  lm(number_of_deaths ~ cell_subscription + population + cell_ban*total_miles_driven + text_ban*total_miles_driven) %>% 
+  lm(number_of_deaths ~ cell_subscription + population + 
+       cell_ban*total_miles_driven + 
+       text_ban*total_miles_driven) %>% 
   tidy()
 
 betas <- 
 cell %$% 
-  lm(number_of_deaths ~ cell_subscription + population + cell_ban*total_miles_driven + text_ban*total_miles_driven) %>% 
+  lm(number_of_deaths ~ cell_subscription + population + 
+       cell_ban*total_miles_driven + 
+       text_ban*total_miles_driven) %>% 
   tidy() %>% 
   pull(estimate)
 
@@ -53,7 +58,7 @@ cell %$%
 cell %>% 
   filter(state %in% c("California", "Wyoming")) %>% 
   select(state, total_miles_driven) %>% 
-  mutate("Number of lives" = betas[4] + total_miles_driven*betas[7]) %>% 
+  mutate("Number of lives" = betas[4] + total_miles_driven * betas[7]) %>% 
   select(state, "Number of lives")
 
 # text ban
@@ -63,24 +68,60 @@ cell %>%
   select(state, total_miles_driven) %>% 
   mutate("Number of lives" = betas[6] + total_miles_driven*betas[8]) %>% 
   select(state, "Number of lives", total_miles_driven)
-
-# effect of miles in state with neither ban
-
-betas[5]
-
-# effect in states with cell ban only
-
-betas[5] + betas[7]
-
-# effect in states with text ban only
-
-betas[5] + betas[8]
-
-# effect in states with both bans
-
-betas[5] + betas[7] + betas[8]
 ```
+
+#### Effect of total miles driven on deaths
+
+##### States which ban neither
+
+`r betas[5]`
+
+##### States which ban both
+
+`r betas[5]` + `r betas[7]` + `r betas[8]` = `r betas[5] + betas[7] + betas[8]` 
+
+##### States which ban cell phones
+
+`r betas[5]` + `r betas[7]` = `r betas[5] + betas[7]`
+
+##### States which ban texting
+
+`r betas[5]` + `r betas[8]` = `r betas[5] + betas[8]`
 
 ### (d)
 
+```{r}
+vcov <- 
+cell %$% 
+  lm(number_of_deaths ~ cell_subscription + population + 
+       cell_ban*total_miles_driven + 
+       text_ban*total_miles_driven) %>% 
+  vcov()
+
+# variance of betas[6] + total_miles_drive * betas[8]
+
+var <- vcov[6,6] + cell$total_miles_driven^2 * vcov[8,8] + 2 * cell$total_miles_driven * vcov[6,8]
+
+lives <- 
+  tibble(lives = betas[6] + cell$total_miles_driven * betas[8],
+         lives_lower = betas[6] + cell$total_miles_driven * betas[8] - 2 * sqrt(var),
+         lives_upper = betas[6] + cell$total_miles_driven * betas[8] + 2 * sqrt(var),
+         miles = cell$total_miles_driven)
+
+
+lives %>% 
+  ggplot(aes(x = miles, y = lives)) +
+  geom_line(color = "blue") + 
+  geom_line(aes(x = miles, y = lives_lower, color = "red")) +
+  geom_line(aes(x = miles, y = lives_upper, color = "red")) + 
+  theme(legend.position = "none") +
+  labs(x = "Total Miles Driven", y = "Marginal effect of text band") + 
+  annotate("text", x = 75000, y = -1250, label = "Marginal effect of text ban") + 
+  annotate("segment", x = 2500, xend = 25000, y = -1250, yend = -1250, color = "blue") + 
+  annotate("text", x = 75000, y = - 1350, label = "95% confidence interval") +
+  annotate("segment", x = 2500, xend = 25000, y = -1350, yend = -1350, color = "red") + 
+  scale_x_continuous(labels = scales::comma) + 
+  scale_y_continuous(labels = scales::comma)
+
+```
 

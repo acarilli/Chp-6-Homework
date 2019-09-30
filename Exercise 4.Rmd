@@ -21,10 +21,14 @@ library(car)
 ```
 
 ```{r data}
-speed <- read_csv("speeding_tickets_text.csv") %>% 
+speed <- 
+  read_csv("speeding_tickets_text.csv") %>% 
   janitor::clean_names() %>% 
   mutate(sex = factor(female, labels = c("female", "male"))) %>% 
-  rename(mph_over = mp_hover)
+  rename(mph_over = mp_hover) 
+
+speed %>% 
+  summarize(sum(black,hispanic)) == nrow(speed)
 ```
 
 ### (a)
