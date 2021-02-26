@@ -1,7 +1,7 @@
 ---
 title: "Exercise 4"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,17 +12,12 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(readr)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(car)
 ```
 
-```{r data}
+```{r 4data}
 speed <- 
-  read_csv("speeding_tickets_text.csv") %>% 
+  here::here("data", "speeding_tickets_text.csv") %>% 
+  read_csv() %>% 
   janitor::clean_names() %>% 
   mutate(sex = factor(female, labels = c("female", "male"))) %>% 
   rename(mph_over = mp_hover) 
@@ -33,32 +28,32 @@ speed %>%
 
 ### (a)
 
-```{r part_a}
-speed %$% 
-  lm(amount ~ sex) %>% 
-  tidy()
+```{r 4a}
+speed %>% 
+  lm(amount ~ sex, .) %>% 
+  jtools::summ()
 ```
 
 ### (b)
 
-```{r part_b}
-speed %$% 
-  lm(amount ~ sex + age + mph_over) %>% 
-  tidy()
+```{r 4b}
+speed %>% 
+  lm(amount ~ sex + age + mph_over, .) %>% 
+  jtools::summ()
 ```
 
 
 ### (c)
 
-```{r part_c}
-speed %$% 
-  lm(amount ~ sex + age + mph_over + black + hispanic) %>% 
-  tidy()
+```{r 4c}
+speed %>% 
+  lm(amount ~ sex + age + mph_over + black + hispanic, .) %>% 
+  jtools::summ()
 ```
 
 ### (d)
 
-```{r part_d}
+```{r 4d}
 speed %>% 
   # drop_na() %>% 
   summarize(sd_black = sd(black),
@@ -68,15 +63,50 @@ speed %>%
 
 ### (e)
 
-```{r}
-speed %$% 
-  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic) %>% 
-  tidy()
+```{r 4e}
+speed %>% 
+  lm(amount ~ mph_over * sex + mph_over * black + mph_over * hispanic, .) %>% 
+  jtools::summ()
 
-speed %$% 
-  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic) %>% 
-  linearHypothesis("mph_over:black - mph_over:hispanic - mph_over:sexmale = 0")
+speed %>% 
+  lm(amount ~ mph_over * sex + mph_over * black + mph_over * hispanic, .) %>% 
+  car::linearHypothesis(c("mph_over:black = 0", "mph_over:hispanic = 0",
+                          "mph_over:sexmale = 0", "black = 0",
+                           "hispanic = 0",  "sexmale = 0"))
   
 ```
 
+
+```{r 4e2}
+
+((speed %>% 
+  lm(amount ~ mph_over, .) %>% 
+  broom::augment() %>% 
+  summarize(ess_r = sum(.resid^2))-
+    
+speed %>% 
+  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic, .) %>% 
+  broom::augment() %>% 
+  summarize(ess_u = sum(.resid^2))) / 6) /
+
+(speed %>% 
+  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic, .) %>% 
+  broom::augment() %>% 
+  summarize(ess_u = sum(.resid^2)) /
+
+speed %>% 
+  lm(amount ~ mph_over*sex + mph_over*black + mph_over*hispanic, .) %>% 
+  broom::glance() %>% 
+  summarize(df = df.residual))
+
+```
+
+```{r}
+speed %>% 
+  lm(amount ~ mph_over * sex + mph_over * black + mph_over * hispanic, .) %>% 
+  car::linearHypothesis(c("mph_over:black = 0", "mph_over:hispanic = 0",
+                          "mph_over:sexmale = 0", "black = 0",
+                           "hispanic = 0",  "sexmale = 0"))
+  
+```
 

@@ -1,7 +1,7 @@
 ---
 title: "Exercise 3"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,45 +12,42 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(readr)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(car)
 ```
 
-```{r data}
-cell <- read_csv("Cellphone_2012_homework.csv") %>% 
+```{r 3data}
+cell <- 
+  here::here("data", "Cellphone_2012_homework.csv") %>% 
+  read_csv() %>% 
   rename(number_of_deaths = numberofdeaths) %>% 
   mutate(population = population/1000000) 
 ```
 
 ### (a)
 
-```{r part_a}
-cell %$% 
-  lm(number_of_deaths ~ cell_subscription + population + total_miles_driven + cell_ban + text_ban) %>% 
-  tidy()
+```{r 3a}
+cell %>% 
+  lm(number_of_deaths ~ cell_subscription + population + 
+       total_miles_driven + cell_ban + text_ban, .) %>% 
+  jtools::summ()
 ```
 
 ### (b)
 
 ### (c)
 
-```{r part_c}
-cell %$% 
+```{r 3c}
+cell %>% 
   lm(number_of_deaths ~ cell_subscription + population + 
        cell_ban*total_miles_driven + 
-       text_ban*total_miles_driven) %>% 
-  tidy()
+       text_ban*total_miles_driven, .) %>% 
+  jtools::summ()
 
 betas <- 
-cell %$% 
+cell %>% 
   lm(number_of_deaths ~ cell_subscription + population + 
        cell_ban*total_miles_driven + 
-       text_ban*total_miles_driven) %>% 
-  tidy() %>% 
+       text_ban*total_miles_driven, .) %>% 
+  broom::tidy() %>% 
   pull(estimate)
 
 # cell ban
@@ -90,12 +87,12 @@ cell %>%
 
 ### (d)
 
-```{r}
+```{r 3plot}
 vcov <- 
-cell %$% 
+cell %>% 
   lm(number_of_deaths ~ cell_subscription + population + 
        cell_ban*total_miles_driven + 
-       text_ban*total_miles_driven) %>% 
+       text_ban*total_miles_driven, .) %>% 
   vcov()
 
 # variance of betas[6] + total_miles_drive * betas[8]

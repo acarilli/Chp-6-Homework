@@ -1,7 +1,7 @@
 ---
 title: "Exercise 1"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -11,100 +11,97 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
-require(tidyverse)
-require(readr)
-require(janitor)
-require(broom)
-require(magrittr)
-require(kableExtra)
+library(tidyverse)
 ```
 
-```{r data}
-height_wage <- read_csv("HeightWage_MenWomenUS_HW.csv")
+```{r 1data}
+height_wage <- 
+  here::here("data","HeightWage_MenWomenUS_HW.csv") %>% 
+  read_csv()
 ```
 
 ### (a)
 
-```{r part_a}
+```{r 1a}
 height_wage %>% 
-  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
-  lm(wage96 ~ height85 + height81 + sex) %>% 
-  tidy()
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  lm(wage96 ~ height85 + height81 + sex, .) %>% 
+  jtools::summ()
 ```
 
 ### (b)
 
-```{r part_b}
+```{r 1b}
 height_wage %>% 
   mutate(female = 1 - male,
          male = factor(male, labels = c("female", "male")),
-         female = factor(female, labels = c("female", "male"))) %$% 
-  lm(wage96 ~ height85 + height81 + male + female) %>% 
-  tidy()
+         female = factor(female, labels = c("female", "male"))) %>% 
+  lm(wage96 ~ height85 + height81 + male + female, .) %>% 
+  jtools::summ()
 ```
 
 ### (c)
 
-```{r part_C}
+```{r 1C}
 height_wage %>% 
   mutate(sex = factor(male, labels = c("female", "male"))) %>% 
-  filter(sex == "male") %$% 
-  lm(wage96 ~ height85 + height81) %>% 
-  tidy()
+  filter(sex == "male") %>% 
+  lm(wage96 ~ height85 + height81, .) %>% 
+  jtools::summ()
 
 height_wage %>% 
   mutate(sex = factor(male, labels = c("female", "male"))) %>% 
-  filter(sex == "female") %$% 
-  lm(wage96 ~ height85 + height81) %>% 
-  tidy()
+  filter(sex == "female") %>% 
+  lm(wage96 ~ height85 + height81, .) %>% 
+  jtools::summ()
 ```
 
 ### (d)
 
-```{r part_d}
+```{r 1d}
 height_wage %>% 
-  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
-  lm(wage96 ~ height85 + height81 + sex * height81 + sex * height85 - sex)  %>% 
-  tidy()
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  lm(wage96 ~ height85 + height81 + sex * height81 + sex * height85 - sex, .)  %>% 
+  jtools::summ()
 ```
 
 ### (e)
 
-```{r part_e}
+```{r 1e}
 height_wage %>% 
-  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
-  lm(wage96 ~ height85 + height81 + sex * height81 + sex * height85)  %>% 
-  tidy()
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  lm(wage96 ~ height85 + height81 + sex * height81 + sex * height85, .)  %>% 
+  jtools::summ()
 ```
 
 ### (f)
 
-```{r part_f}
+```{r 1f}
 height_wage %>% 
-  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
-  lm(wage96 ~ height81 * sex + norest96 + norcen96 + south96) %>% 
-  tidy()
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  lm(wage96 ~ height81 * sex + norest96 + norcen96 + south96, .) %>% 
+  jtools::summ()
 
 height_wage %>% 
-  mutate(sex = factor(male, labels = c("female", "male"))) %$% 
-  lm(wage96 ~ height81 * sex + norest96 + norcen96 + west96) %>% 
-  tidy()
+  mutate(sex = factor(male, labels = c("female", "male"))) %>% 
+  lm(wage96 ~ height81 * sex + norest96 + norcen96 + west96, .) %>% 
+  jtools::summ()
 ```
 
 
 #### Tidy Data Principles
 
-Columns are variables rows are observations.  We have race spread across three columns and region spread across 4 columns.  Tidy data suggests that both region and race be one variable (column) each and be factors not numerics.
+Columns are variables rows are observations.  We have race spread across three columns and region spread across 4 columns.  Tidy data suggests that both region and race be one variable (column) each and be factors not numeric.
 
 
-If the following returns false, there is an other category for race, if it returns true, black, white, hispanic exhaust the racial categories.
+If the following returns false, there is an other category for race, if it returns true, black, white, Hispanic exhaust the racial categories.
 
 ```{r}
 height_wage %>% 
   summarize(sum(black,white,hispanic)) == nrow(height_wage)
 ```
 
-Let's combine black, white, hispanic into race.
+Let's combine black, white, Hispanic into race.
 
 ```{r}
 height_wage %>% 
@@ -155,12 +152,12 @@ height_wage %>%
 Part f with tidy data.
 
 ```{r}
-height_wage_tidy %$% 
-  lm(wage96 ~ height81 * sex + region) %>% 
-  tidy()
+height_wage_tidy %>% 
+  lm(wage96 ~ height81 * sex + region, .) %>% 
+  jtools::summ()
 
-height_wage_tidy %$% 
-  lm(wage96 ~ height81 * sex + relevel(region, "west96")) %>% 
-  tidy()
+height_wage_tidy %>% 
+  lm(wage96 ~ height81 * sex + relevel(region, "west96"), .) %>% 
+  jtools::summ()
 ```
 

@@ -1,7 +1,7 @@
 ---
 title: "Exercise 5"
 author: "Carilli"
-date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+date: '`r format(lubridate::today(), "%B %d, %Y")`'
 output: 
   html_document:
     theme: cerulean
@@ -12,53 +12,52 @@ output:
 knitr::opts_chunk$set(echo = TRUE, comment = NA, warning = FALSE, message = FALSE,
                       options(digits = 3, scipen = 999))
 library(tidyverse)
-library(readr)
-library(janitor)
-library(broom)
-library(magrittr)
-library(kableExtra)
-library(car)
 ```
 
-```{r data}
-knowledge <- read_csv("FiscalPolicy.csv") %>% 
+```{r 5data}
+knowledge <- 
+  here::here("data", "FiscalPolicy.csv") %>% 
+  read_csv() %>% 
   janitor::clean_names()
 ```
 
 ### (a)
 
-```{r part_a}
-knowledge %$% 
-  lm(spend_unemp ~ knowledge_index2) %>% 
-  tidy()
-
-knowledge %$% 
-  lm(tax_unemp_correct ~ knowledge_index2) %>% 
-  tidy()
+```{r 5a}
+jtools::export_summs(
+  knowledge %>% 
+  lm(spend_unemp ~ knowledge_index2, .),
+  
+  knowledge %>% 
+  lm(tax_unemp_correct ~ knowledge_index2, .),
+  model.names = c("Spending & Unemployment", "Tax & Unemployment")
+)
 ```
 
 ### (b)
 
-```{r part_b}
-knowledge %$% 
-  lm(spend_unemp ~ knowledge_index2 + gop) %>% 
-  tidy()
-
-knowledge %$% 
-  lm(tax_unemp_correct ~ knowledge_index2 + gop) %>% 
-  tidy()
+```{r 5b}
+jtools::export_summs(
+  knowledge %>% 
+  lm(spend_unemp ~ knowledge_index2 + gop, .),
+  
+  knowledge %>% 
+  lm(tax_unemp_correct ~ knowledge_index2 + gop, .),
+  model.names = c("Spending & Unemployment", "Tax & Unemployment")
+)
 ```
 
 
 ### (c)
 
-```{r part_c}
-knowledge %$% 
-  lm(spend_unemp ~ knowledge_index2*gop) %>% 
-  tidy()
-
-knowledge %$% 
-  lm(tax_unemp_correct ~ knowledge_index2*gop) %>% 
-  tidy()
+```{r 5c}
+jtools::export_summs(
+  knowledge %>% 
+  lm(spend_unemp ~ knowledge_index2 * gop, .),
+  
+  knowledge %>% 
+  lm(tax_unemp_correct ~ knowledge_index2 * gop, .),
+  model.names = c("Spending & Unemployment", "Tax & Unemployment")
+)
 ```
 
